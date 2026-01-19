@@ -263,7 +263,7 @@ Matteo Tavano
 
 * Email: matteo.tavano@studenti.units.it
 
-> **Note:** This project was developed with the assistance of **Google Gemini 3.0** acting as an AI copilot, debugger and documentation tool. It represents a simplified replication of a complex aerospace engineering problem, specifically oriented towards adapting and benchmarking evolutionary algorithms for continuous domain optimization.
+> **Note:** This project was developed with the assistance of **Google Gemini 3.0** acting as an AI copilot, debugger and documentation tool. 
 
 ## References
 
@@ -272,5 +272,6 @@ Matteo Tavano
 
 2.  R. M. Murray, "Optimization based control," in *Proceedings of the 10th European Control Conference (ECC)*, p. 1065, 2010.  
     [[Caltech CDS]](https://www.cds.caltech.edu/~murray/books/AM08/pdf/obc-complete_04Jan10.pdf)
+
 
 
