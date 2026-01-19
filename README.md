@@ -4,8 +4,7 @@ This work presents a `MATLAB` based replication and extension of the control fra
 
 This project contains the material for the final exam project of the Modeling and Control of Cyber-Physical Systems II course for the academic year 2025-26. This course is offered by UniTS (Università degli Studi di Trieste), Trieste, Italy.
 
-![Circle_MPC_high_performance](plots/python/MPC/Trajectory_Animation_Circle_MPC_High_Performance.gif)
-![Spiral_MPC_high_performance](plots/python/MPC/Trajectory_Animation_Spiral_MPC_High_Performance.gif)
+
 
 ## Table of Contents
 
@@ -97,7 +96,7 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 
 ## Tasks and goal setting
 
-
+The primary task of this project is to design, implement, and validate a fast Linear Time-Varying Model Predictive Control (LTV-MPC) framework for trajectory tracking of a miniature helicopter. The main goal is to accurately follow dynamically feasible reference trajectories in real time while ensuring robustness, stability, and computational efficiency, and to benchmark the proposed solution against a classical PID controller.
 
 ## Usage
 
@@ -124,7 +123,7 @@ Used for post-processing logs and generating Jupyter Notebook visualizations.
     *   `ipython` (Notebook display integration)
 
 
-### Installation
+### Installation and Flow
 
 1.  **Clone the repository**
     ```bash
@@ -154,106 +153,156 @@ Used for post-processing logs and generating Jupyter Notebook visualizations.
     ```matlab
     main
     ```
+
+5. **Select a Simulation or Test**
+
+    Once the menu appears in the Command Window, follow the on-screen prompts:
+
+    Enter **[1]** to run the full MPC Simulation Loop. This performs the trajectory generation, LTV linearization, and QP solving. Telemetry logs are automatically saved to `/results/MPC/`.
+
+    Enter **[2]** to run the PID Benchmark Loop. This runs the classical control simulation for performance comparison. Logs are saved to `/results/PID/`.
+
+    Enter **[3]** to access the Unit Test Suite. From here, you can validate specific subsystems (e.g., Physics, QP Construction, Terminal Cost) before running full simulations.
+
+6. **Inspect Jupyter Notebooks and plots**
+
+    Navigate to the `notebooks/` folder and open:
+
+    `MPC_Results_tracking.ipynb`: To view 3D trajectory plots, tracking error (RMSE), and actuator usage (MPC).
+
+    `PID_Results_tracking.ipynb`: To view 3D trajectory plots, tracking error (RMSE), and actuator usage (PID). 
+
+    `MPC_Reconstruct_dynamics.ipynb`: To validate the accuracy of the LTV prediction model against the non-linear ground truth.
+
+    Navigate to the `plots/` folder to simply visualize the plots.
+
     
-
-### Execution Flow
-
-The project is organized into Jupyter Notebooks to be run sequentially:
-
-1. `notebooks/simulate_rocket.ipynb`:
-* Validates the physics engine.
-* Simulates the "Golden Rocket".
-* Generates the Ground Truth targets for the configuration files.
-
-2. `notebooks/single_trajectory_optimization.ipynb`:
-* Runs ACO-R, ACO-R + Local Search, and Binary GA on Task A.
-* Visualizes convergence and trajectory matching.
-
-3. `notebooks/triple_trajectory_optimization.ipynb`:
-* Runs the multi-objective optimization (Task B).
-* Visualizes the compromise solution across the three scenarios.
-
-4. `notebooks/final_results_comparison.ipynb`:
-* Aggregates data and produces final statistical tables and plots.
-
-
 ## Key Implementation Details
 
-### Physics Engine (RocketPy Wrapper)
+This section summarizes the core architectural and algorithmic design choices of the proposed fast **Linear Time-Varying Model Predictive Control (LTV-MPC)** framework for miniature helicopters. The implementation follows the reference approach while introducing design refinements aimed at robustness, modularity, and real-time feasibility.
 
-**Dynamic Drag**: Skin friction drag is calculated dynamically based on the wetted area of the generated geometry 
-(Cd​∝L/D).
+### Differential Flatness--Based Trajectory Generation
 
-**Analytical Inertia**: Moments of inertia are calculated using the Parallel Axis Theorem for every component (nose, body, fins, motor) to ensure realistic stability.
+Reference trajectories are generated offline by exploiting the differential flatness property of the helicopter dynamics. The system is flat with respect to the inertial position and yaw angle, defined as $z = [x_I, y_I, z_I, \Psi]^T$.
 
-**Synthetic Motor**: A trapezoidal thrust curve is generated programmatically to match the requested Total Impulse and Burn Time.
+Given smooth time profiles for the flat outputs and their derivatives up to second order, namely $z(t)$, $\dot{z}(t)$, and $\ddot{z}(t)$, the full reference state and input trajectories are reconstructed algebraically as $x_r(t) = h(z(t), \dot{z}(t))$ and $u_r(t) = i(z(t), \dot{z}(t), \ddot{z}(t))$.
 
-### Algorithms
+This guarantees that all reference trajectories are dynamically feasible and consistent with the nonlinear system dynamics, eliminating the need for online trajectory optimization.
 
-**ACO-R (Continuous Ant Colony)**:
+### Nonlinear Plant Model and Model Simplification
 
-* Uses a solution archive and a Gaussian Kernel PDF to sample new solutions.
+The helicopter is modeled as a *nonlinear rigid-body* system with translational dynamics expressed in the body frame and kinematic coupling through the yaw angle. The model includes linear drag terms, gravity-compensated vertical dynamics, and integral states for lateral position error rejection.
 
-* Implements an "Extra Elitism" *(qmod)* factor to intensify search around the best solution.
+While the full nonlinear model is used for simulation and nominal trajectory propagation, the MPC prediction model intentionally omits selected cross-coupling terms, such as yaw--velocity and Coriolis effects. The resulting simplified prediction model can be written as $\dot{x} = f_{\text{simp}}(x,u)$ and improves robustness against model mismatch and noisy state estimates. This simplification can be disabled to recover full model fidelity.
 
-**Hybrid Approach (ACO + LS)**:
+### Linear Time-Varying MPC Formulation
 
-* Uses ACO for global exploration.
+At each sampling instant, the nonlinear dynamics are linearized around a time-varying nominal trajectory $(\hat{x}_k, \hat{u}_k)$, yielding the LTV system $x_{k+1} = A_k x_k + B_k u_k + d_k$.
 
-* Triggers a *Nelder-Mead Simplex* (Local Search) when stagnation is detected or at the end of the run to fine-tune the parameters to high precision.
+The Jacobian matrices are defined as $A_k = \partial f / \partial x |_{\hat{x}_k,\hat{u}_k}$ and $B_k = \partial f / \partial u |_{\hat{x}_k,\hat{u}_k}$. The affine correction term is given by $d_k = f(\hat{x}_k,\hat{u}_k) - A_k \hat{x}_k - B_k \hat{u}_k$ and ensures consistency between the linear prediction model and the nonlinear plant.
 
-**Binary GA**:
+### Warm-Start Strategy
 
-* Standard genetic algorithm with 16-bit encoding per parameter used as a performance benchmark.
+To ensure real-time feasibility and solver convergence, a warm-start strategy is employed. The previously optimal control sequence is shifted forward in time according to $\hat{U}_{k+1} = [u^*_{k+1|k}, \ldots, u^*_{k+N-1|k}, u^*_{k+N-1|k}]$.
+
+The corresponding nominal state trajectory is reconstructed by propagating the nonlinear dynamics, ensuring that the linearization remains close to the true system evolution and significantly reducing optimization time.
+
+![Warm Start Strategy](plots/Warm_start_strategy.png)
+
+### Sparse Quadratic Programming Formulation
+
+The finite-horizon MPC problem is cast as a sparse Quadratic Program (QP) of the form $\min_Z \tfrac{1}{2} Z^T H Z + f^T Z$, subject to $A_{\text{eq}} Z = b_{\text{eq}}$ and $Z_{\min} \le Z \le Z_{\max}$.
+
+The decision vector is structured as $Z = [x_0^T, u_0^T, \ldots, u_{N-1}^T, x_N^T]^T$ to preserve the banded sparsity pattern of the dynamics constraints. The Hessian matrix $H$ is block-diagonal and contains the state, input, and terminal cost weighting matrices.
+
+### Terminal Cost and Stability Considerations
+
+To approximate the infinite-horizon optimal control problem and improve closed-loop stability, a quadratic terminal cost $\ell_f(x_N) = x_N^T Q_f x_N$ is included.
+
+The terminal weight matrix $Q_f$ is obtained by solving the Discrete Algebraic Riccati Equation (DARE) associated with the linearized system. For hover, $Q_f$ is computed once around the equilibrium point, while for dynamic trajectories it is recomputed online around the terminal reference state.
+
+Closed-loop stability is verified by checking that the spectral radius condition $\rho(A_d - B_d K) < 1$ is satisfied.
+
+### Benchmark PID Controller
+
+For comparison purposes, a classical PID controller is implemented using body-frame error coordinates. The control law is given by $u(k) = K_p e(k) + K_i \sum_{i=0}^{k} e(i) T_s + K_d (e(k)-e(k-1))/T_s + u_{\text{ff}}$, where $u_{\text{ff}}$ includes gravity feedforward compensation.
+
+Integral anti-windup and actuator saturation are enforced to maintain closed-loop stability.
+
+### Design Philosophy
+
+The overall design prioritizes real-time feasibility, modularity, and faithful reproduction of the reference framework, while enabling controlled extensions toward robustness analysis, learning-based MPC, and embedded real-time deployment.
 
 
 ## Results
 
-### Single Trajectory Results
+All figures and animations referenced in this section are located in `plots/python/` and are directly generated from the simulation logs. They illustrate spatial trajectories, temporal tracking behavior, and qualitative differences between control strategies.
 
-The Hybrid ACO+LS approach demonstrated superior performance, achieving near-perfect trajectory matching.
+### MPC Results
 
-* ACO-R + LS: Achieved near-zero error on Range and Apogee.
+The LTV-MPC controller achieves accurate and stable trajectory tracking across all scenarios.  
+In the **Paper-Fidelity** configuration, the controller exhibits smooth and conservative behavior, prioritizing robustness and low control effort at the cost of visible tracking lag, especially during curvilinear motion.
 
-* Binary GA: Struggled with fine-tuning continuous variables (e.g., Burn Time) due to discretization limits.
+![Circle MPC Paper-Fidelity](plots/python/MPC/Tracking_Performance_Circle_MPC_Paper_Fidelity.png)
+![Spiral MPC Paper-Fidelity](plots/python/MPC/Tracking_Performance_Spiral_MPC_Paper_Fidelity.png)
 
-### Triple Trajectory Results
+In the **High-Performance** configuration, increased state weighting and reduced input penalties significantly improve tracking accuracy. The helicopter closely follows both circular and spiral trajectories with minimal phase lag and negligible steady-state error.
 
-The algorithm successfully found a robust design capable of fulfilling all three mission profiles with an average error of < 1.5 meters on ranges exceeding 1000 meters.
+![Circle MPC High-Performance](plots/python/MPC/Tracking_Performance_Circle_MPC_High_Performance.png)
+![Spiral MPC High-Performance](plots/python/MPC/Tracking_Performance_Spiral_MPC_High_Performance.png)
 
-* The optimizer utilized the physical trade-offs (e.g., reducing diameter to lower drag, increasing fin size for crosswind stability) to satisfy the multi-objective constraints.
+Trajectory animations further highlight the predictive nature of MPC and its ability to anticipate future reference changes:
 
-### Impact of the Local Search 
+- `Trajectory_Animation_Circle_MPC_*.gif`
+- `Trajectory_Animation_Spiral_MPC_*.gif`
 
-The application of the **Local Search** acted as a fine-tuning mechanism, drastically reducing residual errors. In the *Single Trajectory* task, the hybrid approach reduced the fitness cost from **0.4651** (Base ACO) to **0.1924**, effectively eliminating geometric discrepancies in Range and Apogee.  In the *Triple Trajectory* task, the hybrid approach reduced the fitness cost from **0.6948** (Base ACO) to **0.6480**
 
-This demonstrates that the hybrid strategy successfully combines the exploration capabilities of population-based metaheuristics with the exploitation power of direct search methods.
+### PID Results
 
-Impact of the Local Search (single-trajectory):
+The PID controller provides a baseline for comparison.  
+With **Standard Tuning**, the controller struggles to compensate for centripetal forces during circular and spiral motion, resulting in large steady-state offsets and poor spatial fidelity.
 
-![Impact of LS single](plots/single_trajectory/impact_of_LS.png)
+![Circle PID Standard](plots/python/PID/Trajectory_Reconstruction_Circle_PID_Standard_Tuning.png)
+![Spiral PID Standard](plots/python/PID/Trajectory_Reconstruction_Spiral_PID_Standard_Tuning.png)
 
-Impact of the Local Search (triple-trajectory):
+Under **High-Performance Tuning**, tracking accuracy improves substantially; however, this comes at the cost of aggressive control actions and operation close to actuator saturation.
 
-![Impact of LS triple](plots/triple_trajectory/impact_of_LS.png)
+![Circle PID High-Performance](plots/python/PID/Trajectory_Reconstruction_Circle_PID_High_Performance_Tuning.png)
+![Spiral PID High-Performance](plots/python/PID/Trajectory_Reconstruction_Spiral_PID_High_Performance_Tuning.png)
 
-### Convergence History
+Animations (`Trajectory_Animation_*_PID_*.gif`) clearly show increased oscillations and less smooth motion compared to MPC, especially during spiral trajectories.
 
-he comparative analysis of the convergence history reveals a significant efficiency gap between the continuous and discrete approaches, for both tasks:
 
-* **ACO-R**: The algorithm exhibited a steep learning curve, drastically reducing the fitness value within the first 1,500 function calls. This confirms the effectiveness of the Gaussian Kernel in guiding the search towards promising regions without the quantization errors associated with binary encoding.
+### Overall Comparison
 
-* **Binary GA**: The Genetic Algorithm displayed a characteristic "step-wise" convergence profile. It required a significantly larger computational budget to approach the results that ACO-R achieved early in the process, ultimately stalling due to the limits of the 16-bit parameter discretization.
+Quantitative results confirm the qualitative observations.  
+MPC consistently achieves lower tracking error with orders-of-magnitude less control effort compared to PID, while remaining computationally feasible in real time.
 
-Example Convergence:
+**Table 1 — MPC Performance Metrics**
 
-![Convergence History](plots/Convergence_merged.png)
+| Scenario | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
+|--------|----------------|-----------|----------------------|
+| Hover (Paper-Fidelity) | ~0 | ~0 | 3.63 |
+| Circle (Paper-Fidelity) | 0.1697 | 4.24e-3 | 3.52 |
+| Spiral (Paper-Fidelity) | 0.1554 | 3.63e-3 | 3.39 |
+| Circle (High-Perf.) | **0.0335** | 1.23e-3 | 4.12 |
+| Spiral (High-Perf.) | **0.0316** | 5.0e-4 | 4.09 |
+
+**Table 2 — PID Performance Metrics**
+
+| Scenario | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
+|--------|----------------|-----------|----------------------|
+| Circle (Standard) | 0.1937 | 3.96e-2 | 0.005 |
+| Spiral (Standard) | 0.1139 | 1.38e-2 | 0.006 |
+| Circle (High-Perf.) | 0.0515 | **0.7445** | 0.006 |
+| Spiral (High-Perf.) | 0.0336 | **0.8579** | 0.005 |
+
+Overall, the LTV-MPC controller outperforms PID by leveraging prediction and model-based optimization: it achieves superior tracking accuracy with significantly lower control effort, while comfortably meeting real-time constraints at 50 Hz.
+
 
 ## Author
 
 Matteo Tavano
-
-* GitHub: @tavaa
 
 * Email: matteo.tavano@studenti.units.it
 
