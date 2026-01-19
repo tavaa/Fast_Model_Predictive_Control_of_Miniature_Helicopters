@@ -4,6 +4,10 @@ This work presents a `MATLAB` based replication and extension of the control fra
 
 This project contains the material for the final exam project of the Modeling and Control of Cyber-Physical Systems II course for the academic year 2025-26. This course is offered by UniTS (Università degli Studi di Trieste), Trieste, Italy.
 
+<p align="center">
+  <img src="plots/python/MPC/Trajectory_Animation_Circle_MPC_High_Performance.gif" width="45%" />
+  <img src="plots/python/MPC/Trajectory_Animation_Spiral_MPC_High_Performance.gif" width="45%" />
+</p>
 
 ## Table of Contents
 
@@ -217,26 +221,26 @@ The quantitative analysis highlights the trade-off between tracking accuracy, co
 **1. Trajectory Tracking Performance**
 The High-Performance MPC achieved the best overall precision (RMSE $\approx$ 3 cm). While the High-Performance PID approached this accuracy, it did so at the cost of actuator stress.
 
-| Scenario | Strategy | State MSE | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **MPC** | Paper-Fidelity (Hover) | $7.78 \times 10^{-20}$ | $2.79 \times 10^{-10}$ | $1.10 \times 10^{-20}$ | 3.63 |
-| | Paper-Fidelity (Circle) | 0.0288 | 0.1697 | $4.24 \times 10^{-3}$ | 3.52 |
-| | Paper-Fidelity (Spiral) | 0.0241 | 0.1554 | $3.63 \times 10^{-3}$ | 3.39 |
-| | **High-Perf (Hover)** | $6.08 \times 10^{-20}$ | $2.46 \times 10^{-10}$ | $3.96 \times 10^{-20}$ | 4.29 |
-| | **High-Perf (Circle)** | **0.0011** | **0.0335** | **$1.23 \times 10^{-3}$** | 4.12 |
-| | **High-Perf (Spiral)** | **0.0010** | **0.0316** | **$0.50 \times 10^{-3}$** | 4.09 |
+| Strategy | State MSE | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
+| :--- | :--- | :--- | :--- | :--- |
+| Paper-Fidelity (Hover) | $7.78 \times 10^{-20}$ | $2.79 \times 10^{-10}$ | $1.10 \times 10^{-20}$ | 3.63 |
+| Paper-Fidelity (Circle) | 0.0288 | 0.1697 | $4.24 \times 10^{-3}$ | 3.52 |
+| Paper-Fidelity (Spiral) | 0.0241 | 0.1554 | $3.63 \times 10^{-3}$ | 3.39 |
+| **High-Performance (Hover)** | $6.08 \times 10^{-20}$ | $2.46 \times 10^{-10}$ | $3.96 \times 10^{-20}$ | 4.29 |
+| **High-Performance (Circle)** | **0.0011** | **0.0335** | **$1.23 \times 10^{-3}$** | 4.12 |
+| **High-Performance (Spiral)** | **0.0010** | **0.0316** | **$0.50 \times 10^{-3}$** | 4.09 |
 
 **2. PID Performance Metrics**
 The PID solver is orders of magnitude faster ($6 \mu s$) but requires significantly higher control effort to achieve comparable tracking.
 
-| Scenario | Strategy | State MSE | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **PID** | Standard (Hover) | 0.0000 | 0.0000 | 0.0000 | 0.025 |
-| | Standard (Circle) | 0.0375 | 0.1937 | 0.0396 | 0.005 |
-| | Standard (Spiral) | 0.0129 | 0.1139 | 0.0138 | 0.006 |
-| | High-Perf (Hover) | 0.0000 | 0.0000 | 0.0000 | 0.052 |
-| | High-Perf (Circle) | 0.0026 | 0.0515 | 0.7445 | 0.006 |
-| | High-Perf (Spiral) | 0.0011 | 0.0336 | 0.8579 | 0.005 |
+| Strategy | State MSE | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
+| :--- | :--- | :--- | :--- | :--- |
+| Standard (Hover) | 0.0000 | 0.0000 | 0.0000 | 0.025 |
+| Standard (Circle) | 0.0375 | 0.1937 | 0.0396 | 0.005 |
+| Standard (Spiral) | 0.0129 | 0.1139 | 0.0138 | 0.006 |
+| High-Performance (Hover) | 0.0000 | 0.0000 | 0.0000 | 0.052 |
+| High-Performance (Circle) | 0.0026 | 0.0515 | 0.7445 | 0.006 |
+| High-Performance (Spiral) | 0.0011 | 0.0336 | 0.8579 | 0.005 |
 
 **Key Observation:** The **Input MSE** for the High-Performance PID ($\sim 0.8$) is nearly **three orders of magnitude higher** than the MPC ($\sim 0.001$). This indicates that the PID operates near saturation limits to maintain tracking, which would likely induce mechanical vibration in a physical system.
 
@@ -249,6 +253,9 @@ An adaptive terminal cost strategy was also evaluated. Results indicate a perfor
 | Circle | 0.1225 | 0.3500 | 5.41 |
 | Spiral | 0.1116 | 0.3341 | 5.55 |
 
+### MPC Tracking Error
+
+![TrackingErrorMPC](plots/python/MPC/TrackingErrorMPC.png)
 
 ## Author
 
