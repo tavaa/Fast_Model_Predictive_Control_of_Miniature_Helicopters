@@ -124,6 +124,7 @@ for s = 1:size(scenarios, 1)
     
     % Statistical Counters
     sum_sq_err_x = 0;   
+    sum_sq_err_u = 0;
     sum_calc_time = 0;  
     
     fprintf('    Simulating... ');
@@ -178,6 +179,11 @@ for s = 1:size(scenarios, 1)
         
         % Accumulate tracking performance (RMSE)
         sum_sq_err_x = sum_sq_err_x + norm(current_x(1:4) - ref_now(1:4))^2;
+
+        % Accumulate input tracking performance (Input MSE)
+        % uref_seq(:,1) is the reference input at current time step
+        sum_sq_err_u = sum_sq_err_u + norm(u_opt - uref_seq(:, 1))^2;
+
         current_x = next_x;
     end
     fprintf('Done.\n');
@@ -195,14 +201,15 @@ for s = 1:size(scenarios, 1)
     % Compute metrics
     mse_x = sum_sq_err_x / N_steps;
     rmse_x = sqrt(mse_x);
-    metrics_data(end+1, :) = {scenario_name, mse_x, rmse_x, sum_calc_time/N_steps, N_steps, T_end};
+    mse_u = sum_sq_err_u / N_steps;
+    metrics_data(end+1, :) = {scenario_name, mse_x, rmse_x, mse_u, sum_calc_time/N_steps, N_steps, T_end};
 end
 
 %% FINAL PERFORMANCE SUMMARY EXPORT
 
 fprintf('      SIMULATION COMPLETE: SUMMARY METRICS         \n');
 
-var_met = {'Scenario', 'State_MSE', 'State_RMSE', 'Avg_SolveTime', 'Steps', 'Duration'};
+var_met = {'Scenario', 'State_MSE', 'State_RMSE', 'Input_MSE', 'Avg_SolveTime', 'Steps', 'Duration'};
 T_met = cell2table(metrics_data, 'VariableNames', var_met);
 writetable(T_met, fullfile(fullRunDir, 'MPC_Metrics_Summary.csv'));
 
