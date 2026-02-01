@@ -79,7 +79,7 @@ while true
     fprintf('       (Check results/PID/ for the results.)\n\n');
 
     fprintf('   [3] Run MPC Simulation Loop for Ts\n');
-    fprintf('       (Tests in depth MPC Analysis based on Ts and Initialization strategies. )\n\n');
+    fprintf('       (Tests in depth MPC Analysis based on Ts and Initialization strategies.)\n\n');
 
     fprintf('   [4] Enter Unit Test Suite\n');
     fprintf('       (Validate individual components: Model, QP, Math, etc.)\n\n');

@@ -1,16 +1,27 @@
 # Fast Model Predictive Control of Miniature Helicopters
 
 <p align="center">
+  <!-- Tech stack -->
   <img src="https://img.shields.io/badge/MATLAB-R2024b-orange?style=for-the-badge&logo=mathworks&logoColor=white" alt="MATLAB R2024b" />
   <img src="https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10" />
 </p>
+
+<p align="center">
+  <!-- GitHub stats -->
+  <img src="https://img.shields.io/github/stars/tavaa/Fast_Model_Predictive_Control_of_Miniature_Helicopters?style=for-the-badge" alt="GitHub stars" />
+  <img src="https://img.shields.io/github/forks/tavaa/Fast_Model_Predictive_Control_of_Miniature_Helicopters?style=for-the-badge" alt="GitHub forks" />
+  <img src="https://img.shields.io/github/license/tavaa/Fast_Model_Predictive_Control_of_Miniature_Helicopters?style=for-the-badge" alt="License" />
+  <a href="mailto:matteo.tavano@studenti.units.it">
+    <img src="https://img.shields.io/badge/Contact-Email-informational?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" />
+  </a>
+</p>
+
 
 This work presents a `MATLAB` based replication and extension of the control framework proposed by the authors for **Fast Model Predictive Control of Miniature Helicopters**. The original approach is reproduced with the objective of validating the reported results, while introducing improvements in the implementation and extending the analysis to additional scenarios. Trajectory generation is performed following the method proposed by Murray, ensuring dynamically feasible reference trajectories that respect the system constraints. The helicopter dynamics are modeled and discretized for real-time control, and a fast **Model Predictive Controller (MPC)** is implemented and evaluated. For comparison purposes, a classical **Proportional Integral Derivative (PID)** controller is also considered. Simulation results demonstrate that the replicated framework successfully reproduces the behavior described by the authors, while the proposed extensions improve tracking performance and robustness, confirming the effectiveness of fast MPC for aerial systems.
 
 This project contains the material for the final exam project of the Modeling and Control of Cyber-Physical Systems II course for the academic year 2025-26. This course is offered by UniTS (Università degli Studi di Trieste), Trieste, Italy.
 
-
-
+<br/>
 
 <p align="center">
   <img src="plots/python/MPC/Trajectory_Animation_Circle_MPC_High_Performance.gif" width="45%" />
@@ -171,9 +182,64 @@ This project implements a **Linear Time-Varying Model Predictive Control (LTV-MP
 The optimal control problem is formulated as a **Sparse Quadratic Program (QP)**, preserving the banded structure of the dynamics constraints for efficient computation. To ensure real-time feasibility, a **Warm-Start strategy** propagates the previous optimal solution forward, significantly reducing solver convergence time. Closed-loop stability is enhanced via a **Terminal Cost ($Q_f$)**, computed by solving the Discrete Algebraic Riccati Equation (DARE) at the horizon's end. For performance comparison, a classical decoupled **PID controller** with gravity feedforward and integral anti-windup is included as a benchmark. The overall architecture prioritizes modularity and computational efficiency, bridging the gap between high-fidelity simulation and real-time constraints.
 
 
-### MPC Tracking Error
+## Results
 
-![TrackingErrorMPC](plots/python/MPC/TrackingErrorMPC.png)
+### MPC Results
+
+The Model Predictive Control (MPC) strategy was evaluated under multiple configurations and flight scenarios (Hover, Circle, Spiral). Two main tuning strategies are reported below: **Paper-Fidelity** and **High-Performance**.
+
+
+| Scenario | State MSE | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
+|--------|-----------|----------------|-----------|----------------------|
+| **MPC Paper-Fidelity** |||||
+| Hover  | 7.79 × 10⁻²⁰ | 2.79 × 10⁻¹⁰ | 1.11 × 10⁻²⁰ | 4.28 |
+| Circle | 0.0290 | 0.1703 | 4.16 × 10⁻³ | 3.87 |
+| Spiral| 0.0243 | 0.1560 | 3.53 × 10⁻³ | 3.82 |
+| **MPC High-Performance** |||||
+| Hover  | 6.09 × 10⁻²⁰ | 2.47 × 10⁻¹⁰ | 3.97 × 10⁻²⁰ | 4.26 |
+| Circle | 0.0011 | 0.0336 | 1.23 × 10⁻³ | 4.33 |
+| Spiral| 0.0010 | 0.0316 | 0.51 × 10⁻³ | 4.13 |
+
+**Key observations**
+- MPC achieves **very low tracking error**, especially in dynamic trajectories.
+- The **High-Performance configuration** significantly improves accuracy with minimal increase in computation time.
+- Average solve time remains well below the 20 ms sampling period, confirming **real-time feasibility**.
+
+
+### PID Results
+
+The PID controller is used as a baseline for comparison and is evaluated under **Standard** and **High-Performance** tuning strategies.
+
+
+| Scenario | State MSE | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
+|--------|-----------|----------------|-----------|----------------------|
+| **PID Standard Tuning** |||||
+| Hover  | 0.0000 | 0.0000 | 0.0000 | 0.026 |
+| Circle | 0.0375 | 0.1938 | 0.0396 | 0.006 |
+| Spiral| 0.0130 | 0.1140 | 0.0139 | 0.007 |
+| **PID High-Performance Tuning** |||||
+| Hover  | 0.0000 | 0.0000 | 0.0000 | 0.053 |
+| Circle | 0.0027 | 0.0515 | 0.7445 | 0.006 |
+| Spiral| 0.0011 | 0.0337 | 0.8580 | 0.006 |
+
+**Key observations**
+- PID achieves acceptable tracking only with **aggressive tuning**.
+- High tracking accuracy is obtained at the cost of **very high control effort**.
+- Computational cost is negligible, but actuator saturation is frequently approached.
+
+---
+
+### Overall Comparison
+
+The comparison highlights the fundamental trade-offs between predictive and reactive control strategies.
+
+**Main conclusions**
+- MPC consistently outperforms PID in **trajectory tracking accuracy**, especially for curvilinear motion.
+- PID can reach similar accuracy only by applying **orders-of-magnitude higher control effort**, which is undesirable for real hardware.
+- MPC leverages model prediction to anticipate future reference changes, resulting in smoother and more efficient control actions.
+
+Overall, the results confirm the effectiveness of **fast LTV-MPC** for miniature helicopter control and its suitability for real-time applications.
+
 
 ## Author
 
@@ -185,12 +251,30 @@ Matteo Tavano
 
 ## References
 
-1.  K. Kunz, S. M. Huck, T. H. Summers, "Fast Model Predictive Control of miniature helicopters", 2013 European Control Conference (ECC), 2013, Pages 1377-1382, https://doi.org/10.23919/ECC.2013.6669699
+1. K. Kunz, S. M. Huck, T. H. Summers,  
+   **Fast Model Predictive Control of Miniature Helicopters**,  
+   *Proceedings of the 2013 European Control Conference (ECC)*, Zürich, Switzerland, 2013, pp. 1377–1382.  
+   https://doi.org/10.23919/ECC.2013.6669699
 
-2.  R.M. Murray, "Optimization Based Control", California Institute of Technology, 2023, Chapter Trajectory Generation and Differential Flatness, http://www.cds.caltech.edu/~murray/books/AM08/pdf/obc-complete_12Mar2023.pdf
+2. R. M. Murray,  
+   **Optimization-Based Control**,  
+   California Institute of Technology, Chapter: *Trajectory Generation and Differential Flatness*, 2023.  
+   http://www.cds.caltech.edu/~murray/books/AM08/pdf/obc-complete_12Mar2023.pdf
 
-3.  The MathWorks Inc., "MATLAB version: 24.2.0 (R2024b)", The MathWorks Inc., 2024, https://www.mathworks.com
+3. The MathWorks Inc.,  
+   **MATLAB version: 24.2.0 (R2024b)**,  
+   The MathWorks Inc., 2024.  
+   https://www.mathworks.com
 
+4. D. Q. Mayne, J. B. Rawlings, C. V. Rao, P. O. M. Scokaert,  
+   **Constrained Model Predictive Control: Stability and Optimality**,  
+   *Automatica*, vol. 36, no. 6, pp. 789–814, 2000.  
+   https://doi.org/10.1016/S0005-1098(99)00214-9
+
+5. H. Chen, F. Allgöwer,  
+   **A Quasi-Infinite Horizon Nonlinear Model Predictive Control Scheme with Guaranteed Stability**,  
+   *Automatica*, vol. 34, no. 10, pp. 1205–1217, 1998.  
+   https://doi.org/10.1016/S0005-1098(98)00067-1
 
 
 
