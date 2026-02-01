@@ -130,11 +130,9 @@ To successfully run the simulation and analysis pipelines, ensure your environme
     cd Fast_Model_Predictive_Control_of_Miniature_Helicopters
     ```
 
-2.  **Launch the MATLAB EntryPoint**
+2.  **Launch the MATLAB EntryPoint: Open your MATLAB environment and run from console.**
    
-   Open your MATLAB environment and run from console:
-   
-    ```matlab
+    ```
     main
     ```
 
@@ -188,6 +186,7 @@ Matteo Tavano
 2.  R.M. Murray, "Optimization Based Control", California Institute of Technology, 2023, Chapter Trajectory Generation and Differential Flatness, http://www.cds.caltech.edu/~murray/books/AM08/pdf/obc-complete_12Mar2023.pdf
 
 3.  The MathWorks Inc., "MATLAB version: 24.2.0 (R2024b)", The MathWorks Inc., 2024, https://www.mathworks.com
+
 
 
 
