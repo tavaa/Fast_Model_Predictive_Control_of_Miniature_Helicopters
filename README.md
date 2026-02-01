@@ -110,7 +110,7 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 ├── LICENSE.txt                                 # License definition
 ├── main.m                                      # CLI Project Orchestrator (Entry Point)
 ├── README.md                                   # Project Overview
-└── Report_Fast_Modell_Predictive_Control_of_Miniature_Helicopters.pdf # Project Report
+└── Report_Fast_Model_Predictive_Control_of_Miniature_Helicopters.pdf # Project Report
 ```
 
 ## Tasks and goal setting
@@ -172,7 +172,7 @@ To successfully run the simulation and analysis pipelines, ensure your environme
 
 5. **Read the Report**
 
-   For a complete explanation, read the pdf report `Report_Fast_Modell_Predictive_Control_of_Miniature_Helicopters.pdf`. 
+   For a complete explanation, read the pdf report `Report_Fast_Model_Predictive_Control_of_Miniature_Helicopters.pdf`. 
 
     
 ## Key Implementation Details
@@ -275,6 +275,7 @@ Matteo Tavano
    **A Quasi-Infinite Horizon Nonlinear Model Predictive Control Scheme with Guaranteed Stability**,  
    *Automatica*, vol. 34, no. 10, pp. 1205–1217, 1998.  
    https://doi.org/10.1016/S0005-1098(98)00067-1
+
 
 
 
