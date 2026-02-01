@@ -26,7 +26,11 @@
 %      Runs a benchmark simulation using a classical PID 
 %      architecture for performance comparison.
 %
-%   3. Unit Test Suite:
+%   3. MPC Simulation Loop for Ts:
+%        Runs in depth Simulation Loop for MPC, analyzing Ts 
+%         and different initial conditions.
+%
+%   4. Unit Test Suite:
 %      Access to a submenu for validating specific mathematical subsystems
 %      (e.g., Physics, Linearization, Discretization, Optimization construction).
 %
@@ -74,7 +78,10 @@ while true
     fprintf('   [2] Run PID Simulation Loop\n');
     fprintf('       (Check results/PID/ for the results.)\n\n');
 
-    fprintf('   [3] Enter Unit Test Suite\n');
+    fprintf('   [3] Run MPC Simulation Loop for Ts\n');
+    fprintf('       (Tests in depth MPC Analysis based on Ts and Initialization strategies. )\n\n');
+
+    fprintf('   [4] Enter Unit Test Suite\n');
     fprintf('       (Validate individual components: Model, QP, Math, etc.)\n\n');
 
     fprintf('   [0] Exit\n');
@@ -111,8 +118,19 @@ while true
                 fprintf('[ERROR] scripts/PIDSimulationLoop.m not found.\n');
                 waitForUser('Error.');
             end
-
+        
         case 3
+            % MPC Simulation Loop Ts
+            if exist('MPCSimulationLoopTs.m', 'file')
+                fprintf('Starting MPC Simulation with Ts...\n');
+                run('MPCSimulationLoopTs.m');
+                waitForUser('Simulation Complete.');
+            else
+                fprintf('[ERROR] scripts/MPCSimulationLoopTs.m not found.\n');
+                waitForUser('Error.');
+            end
+
+        case 4
             % UNIT TEST SUITE SUB-LOOP 
             runTestSuite();
 
