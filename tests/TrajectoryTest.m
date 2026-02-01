@@ -2,7 +2,6 @@
 %
 % Validates the geometric and kinematic consistency of the Shape classes.
 % Specifically verifies the 3-revolution Spiral duration and the 
-% 'tangent' yaw mode (Coordinated Turn) for both Circle and Spiral.
 
 clear; clc; close all;
 
@@ -82,12 +81,10 @@ function run_and_plot(traj_obj, t_vec, name, plot_idx, col)
     plot3(Pos(1,end), Pos(2,end), Pos(3,end), 's', 'MarkerSize', 8, 'MarkerFaceColor', 'r', 'DisplayName', 'End');
     
     % Heading Vector Visualization 
-    % Decimate samples for visual clarity
     num_quivers = 15;
     step = max(floor(N/num_quivers), 1);
     idx_q = 1:step:N;
     
-    % Heading vector (length scaled for visibility)
     v_len = 0.4;
     u_h = v_len * cos(Yaw(idx_q));
     v_h = v_len * sin(Yaw(idx_q));
@@ -97,6 +94,11 @@ function run_and_plot(traj_obj, t_vec, name, plot_idx, col)
             
     xlabel('X [m]'); ylabel('Y [m]'); zlabel('Z [m]');
     title(['\bf ' name ' Trajectory']);
+    
+    max_z = max(Pos(3,:));
+    if max_z < 0.1, max_z = 1; end 
+    zlim([0, max_z * 1.5]); 
+    
     view(45, 30);
     
     % Time Series Plot 
@@ -104,16 +106,19 @@ function run_and_plot(traj_obj, t_vec, name, plot_idx, col)
     yyaxis left
     plot(t_vec, Pos(1,:), '-', 'LineWidth', 1, 'DisplayName', 'x'); hold on;
     plot(t_vec, Pos(2,:), '-', 'LineWidth', 1, 'DisplayName', 'y');
-    plot(t_vec, Pos(3,:), '-', 'LineWidth', 1, 'DisplayName', 'z');
+    plot(t_vec, Pos(3,:), '-', 'LineWidth', 1.5, 'DisplayName', 'z');
     ylabel('Position [m]');
-    ylim([-1.5, 1.5 + max(Pos(3,:))]); 
+    
+    % Ensure the 2D plot also has room to show Z clearly
+    y_limit_upper = max(1.5, max(Pos(3,:)) + 0.5);
+    ylim([-1.5, y_limit_upper]); 
     
     yyaxis right
-    % Plot Yaw in degrees for accessibility
     plot(t_vec, rad2deg(Yaw), 'k-', 'LineWidth', 1.5, 'DisplayName', 'Yaw');
     ylabel('Heading [deg]');
     
     xlabel('Time [s]');
+    xlim([t_vec(1), t_vec(end)]); % Force x-axis to match simulation duration exactly
     title(['Temporal Evolution: ' name]);
     grid on;
     legend('Location', 'best', 'FontSize', 8);
