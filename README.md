@@ -113,7 +113,7 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 └── Report_Fast_Model_Predictive_Control_of_Miniature_Helicopters.pdf # Project Report
 ```
 
-[Helicopter_plot](plots/Helicopter_Blade_mCX2.png)
+[Helicopter_plot](/plots/Helicopter_Blade_mCX2.png)
 
 ## Tasks and goal setting
 
@@ -277,6 +277,7 @@ Matteo Tavano
    **A Quasi-Infinite Horizon Nonlinear Model Predictive Control Scheme with Guaranteed Stability**,  
    *Automatica*, vol. 34, no. 10, pp. 1205–1217, 1998.  
    https://doi.org/10.1016/S0005-1098(98)00067-1
+
 
 
 
