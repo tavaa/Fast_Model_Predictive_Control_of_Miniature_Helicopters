@@ -113,8 +113,6 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 └── Report_Fast_Model_Predictive_Control_of_Miniature_Helicopters.pdf # Project Report
 ```
 
-[Helicopter_plot](/plots/Helicopter_Blade_mCX2.png)
-
 ## Tasks and goal setting
 
 The primary task of this project is to design, implement, and validate a fast Linear Time-Varying Model Predictive Control (LTV-MPC) framework for trajectory tracking of a miniature helicopter. The main goal is to accurately follow dynamically feasible reference trajectories in real time while ensuring robustness, stability, and computational efficiency, and to benchmark the proposed solution against a classical PID controller.
@@ -277,6 +275,7 @@ Matteo Tavano
    **A Quasi-Infinite Horizon Nonlinear Model Predictive Control Scheme with Guaranteed Stability**,  
    *Automatica*, vol. 34, no. 10, pp. 1205–1217, 1998.  
    https://doi.org/10.1016/S0005-1098(98)00067-1
+
 
 
 
