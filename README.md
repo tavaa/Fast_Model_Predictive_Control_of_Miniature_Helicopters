@@ -148,21 +148,25 @@ To successfully run the simulation and analysis pipelines, ensure your environme
         Runs the classical PID control simulation for performance benchmarking.  
         📂 *Logs are saved to* `/results/PID/`.
 
-    *   **`[1]` MPC Simulation Loop Ts**  
+    *   **`[3]` MPC Simulation Loop Ts**  
         Executes the MPC in depth analysis for Ts and different initial conditions.  
         📂 *Logs are automatically saved to* `/results/MPC/Ts-Analysis`.
 
     *   **`[4]` Unit Test Suite**  
         Launches the testing framework to validate specific subsystems (e.g., Physics Engine, QP Builder, Terminal Cost) before running full simulations.
 
-5. **Inspect results and plots**
+4. **Inspect results and plots**
 
     Navigate to the `plots/` folder to simply visualize the plots, use instead `results/` to inspect the project results.
+
+5. **Read the Report**
+
+   For a complete explanation, read the pdf report `Report_Fast_Modell_Predictive_Control_of_Miniature_Helicopters.pdf`. 
 
     
 ## Key Implementation Details
 
-This project implements a **Linear Time-Varying Model Predictive Control (LTV-MPC)** framework designed for the agile control of miniature helicopters. Reference trajectories are generated offline using **Differential Flatness**, ensuring dynamic feasibility without the need for complex online optimization. The system utilizes a **nonlinear 6-DOF rigid-body model**, which is sequentially linearized along a time-varying nominal trajectory to maintain high prediction fidelity.
+This project implements a **Linear Time-Varying Model Predictive Control (LTV-MPC)** framework designed for the control of miniature helicopters. Reference trajectories are generated offline using **Differential Flatness**, ensuring dynamic feasibility without the need for complex online optimization. The system utilizes a **nonlinear rigid-body model**, which is sequentially linearized along a time-varying nominal trajectory to maintain high prediction fidelity.
 
 The optimal control problem is formulated as a **Sparse Quadratic Program (QP)**, preserving the banded structure of the dynamics constraints for efficient computation. To ensure real-time feasibility, a **Warm-Start strategy** propagates the previous optimal solution forward, significantly reducing solver convergence time. Closed-loop stability is enhanced via a **Terminal Cost ($Q_f$)**, computed by solving the Discrete Algebraic Riccati Equation (DARE) at the horizon's end. For performance comparison, a classical decoupled **PID controller** with gravity feedforward and integral anti-windup is included as a benchmark. The overall architecture prioritizes modularity and computational efficiency, bridging the gap between high-fidelity simulation and real-time constraints.
 
@@ -186,6 +190,7 @@ Matteo Tavano
 2.  R.M. Murray, "Optimization Based Control", California Institute of Technology, 2023, Chapter Trajectory Generation and Differential Flatness, http://www.cds.caltech.edu/~murray/books/AM08/pdf/obc-complete_12Mar2023.pdf
 
 3.  The MathWorks Inc., "MATLAB version: 24.2.0 (R2024b)", The MathWorks Inc., 2024, https://www.mathworks.com
+
 
 
 
