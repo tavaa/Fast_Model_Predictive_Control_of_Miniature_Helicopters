@@ -59,7 +59,8 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 │   ├── MPC/
 │   │   ├── High-Performance/                   # High-Performance setup
 │   │   ├── Paper-Fidelity/                     # Replication of reference paper results
-│   │   └── Terminal-Cost/                      # Terminal-Cost setup results
+│   │   ├── Terminal-Cost/                      # Terminal-Cost setup results
+│   │   └── Ts-Analysis/                        # Ts and initial conditions results
 │   │
 │   └── PID/
 │       ├── High-Performance-Tuning/            # High-Performance PID results
@@ -67,10 +68,12 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 │
 ├── scripts/                                    # Simulation Loops
 │   ├── MPCSimulationLoop.m                     # Main loop for LTV-MPC simulation
+│   ├── MPCSimulationLoopv2.m                   # Main loop for LTV-MPC simulation with Ts Analysis
 │   └── PIDSimulationLoop.m                     # Main loop for PID benchmark simulation
 │
 ├── src/                                        # Core Controller Source Code
 │   ├── MPCController.m                         # LTV-MPC Logic and Optimization call
+│   ├── MPCControllerv2.m                       # LTV-MPC modified for Ts analysis
 │   ├── PIDController.m                         # PID implementation
 │   ├── QPBuilder.m                             # Sparse Matrix Construction for QP
 │   └── TerminalCost.m                          # DLQR-based Terminal Cost calculation
@@ -121,12 +124,16 @@ To successfully run the simulation and analysis pipelines, ensure your environme
 ### Installation and Flow
 
 1.  **Clone the repository**
+   
     ```bash
     git clone https://github.com/tavaa/Fast_Model_Predictive_Control_of_Miniature_Helicopters.git
     cd Fast_Model_Predictive_Control_of_Miniature_Helicopters
     ```
 
 2.  **Launch the MATLAB EntryPoint**
+   
+   Open your MATLAB environment and run from console:
+   
     ```matlab
     main
     ```
@@ -137,16 +144,20 @@ To successfully run the simulation and analysis pipelines, ensure your environme
 
     *   **`[1]` MPC Simulation Loop**  
         Executes the full LTV-MPC pipeline: trajectory generation, linearization, and QP solving.  
-        📂 *Telemetry logs are automatically saved to* `/results/MPC/`.
+        📂 *Logs are automatically saved to* `/results/MPC/`.
 
     *   **`[2]` PID Benchmark Loop**  
         Runs the classical PID control simulation for performance benchmarking.  
         📂 *Logs are saved to* `/results/PID/`.
 
-    *   **`[3]` Unit Test Suite**  
+    *   **`[1]` MPC Simulation Loop Ts**  
+        Executes the MPC in depth analysis for Ts and different initial conditions.  
+        📂 *Logs are automatically saved to* `/results/MPC/Ts-Analysis`.
+
+    *   **`[4]` Unit Test Suite**  
         Launches the testing framework to validate specific subsystems (e.g., Physics Engine, QP Builder, Terminal Cost) before running full simulations.
 
-4. **Inspect results and plots**
+5. **Inspect results and plots**
 
     Navigate to the `plots/` folder to simply visualize the plots, use instead `results/` to inspect the project results.
 
@@ -157,73 +168,6 @@ This project implements a **Linear Time-Varying Model Predictive Control (LTV-MP
 
 The optimal control problem is formulated as a **Sparse Quadratic Program (QP)**, preserving the banded structure of the dynamics constraints for efficient computation. To ensure real-time feasibility, a **Warm-Start strategy** propagates the previous optimal solution forward, significantly reducing solver convergence time. Closed-loop stability is enhanced via a **Terminal Cost ($Q_f$)**, computed by solving the Discrete Algebraic Riccati Equation (DARE) at the horizon's end. For performance comparison, a classical decoupled **PID controller** with gravity feedforward and integral anti-windup is included as a benchmark. The overall architecture prioritizes modularity and computational efficiency, bridging the gap between high-fidelity simulation and real-time constraints.
 
-
-## Results
-
-The experimental results validate the implementation of the fast LTV-MPC framework and compare it against a classical PID baseline across three flight scenarios: **Hover**, **Circle**, and **Spiral**. Two tuning strategies were employed for both controllers: a conservative "Paper-Fidelity" (MPC) / "Standard" (PID) approach, and a "High-Performance" approach.
-
-### MPC Results
-
-The Model Predictive Controller demonstrated higher capability in handling complex, dynamics by exploiting the internal LTV model.
-
-*   **Circle Trajectory:**
-    *   **Paper-Fidelity:** The controller exhibited stable but conservative behavior. Due to a high input penalty ($R$), the solver adopted an energy-efficient solution, effectively "cutting the corner" of the circle to minimize control effort.
-    *   **High-Performance:** By increasing state error weights ($Q$) and utilizing the full physical model (disabling yaw-coupling simplifications), the tracking error was significantly reduced. The MPC accurately predicted the lateral forces required for the turn, resulting in near-perfect synchronization with the reference.
-
-*   **Spiral Trajectory:**
-    *   **Paper-Fidelity:** Maintained a stable helical path but suffered from visible tracking lag, particularly in heading, as the high input penalty discouraged the aggressive pitch/roll maneuvers required for the climb.
-    *   **High-Performance:** The controller effectively managed 3D centripetal forces and the vertical climb rate. The resulting path was nearly indistinguishable from the reference, demonstrating that the LTV-MPC can exploit nonlinear dynamics to minimize phase lag.
-
-### PID Results
-
-The PID controller acted as a reactive benchmark. While computationally efficient, it lacked the predictive capacity to compensate for inertial forces during curvilinear flight without excessive gain tuning.
-
-*   **Circle Trajectory:**
-    *   **Standard Tuning:** Resulted in poor tracking fidelity with a substantial spatial offset; the helicopter flew a radius significantly larger than commanded due to uncompensated centrifugal effects.
-    *   **High-Performance Tuning:** Increased gains allowed the controller to counteract system inertia more effectively, reducing position error. However, the system remained highly sensitive to model nonlinearities.
-
-*   **Spiral Trajectory:**
-    *   **Standard Tuning:** Exhibited a significant steady-state offset, unable to simultaneously manage the 1.0m radius and the vertical climb.
-    *   **High-Performance Tuning:** The increased authority reduced tracking lag, pulling the path closer to the reference. While spatial accuracy improved, the architecture still lacked the smoothness inherent to the model-based MPC.
-
-### Overall Comparison
-
-The quantitative analysis highlights the trade-off between tracking accuracy, control effort, and computational cost.
-
-**1. Trajectory Tracking Performance**
-The High-Performance MPC achieved the best overall precision (RMSE $\approx$ 3 cm). While the High-Performance PID approached this accuracy, it did so at the cost of actuator stress.
-
-| Strategy | State MSE | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
-| :--- | :--- | :--- | :--- | :--- |
-| Paper-Fidelity (Hover) | $7.78 \times 10^{-20}$ | $2.79 \times 10^{-10}$ | $1.10 \times 10^{-20}$ | 3.63 |
-| Paper-Fidelity (Circle) | 0.0288 | 0.1697 | $4.24 \times 10^{-3}$ | 3.52 |
-| Paper-Fidelity (Spiral) | 0.0241 | 0.1554 | $3.63 \times 10^{-3}$ | 3.39 |
-| **High-Performance (Hover)** | $6.08 \times 10^{-20}$ | $2.46 \times 10^{-10}$ | $3.96 \times 10^{-20}$ | 4.29 |
-| **High-Performance (Circle)** | **0.0011** | **0.0335** | **$1.23 \times 10^{-3}$** | 4.12 |
-| **High-Performance (Spiral)** | **0.0010** | **0.0316** | **$0.50 \times 10^{-3}$** | 4.09 |
-
-**2. PID Performance Metrics**
-The PID solver is orders of magnitude faster ($6 \mu s$) but requires significantly higher control effort to achieve comparable tracking.
-
-| Strategy | State MSE | State RMSE [m] | Input MSE | Avg. Solve Time [ms] |
-| :--- | :--- | :--- | :--- | :--- |
-| Standard (Hover) | 0.0000 | 0.0000 | 0.0000 | 0.025 |
-| Standard (Circle) | 0.0375 | 0.1937 | 0.0396 | 0.005 |
-| Standard (Spiral) | 0.0129 | 0.1139 | 0.0138 | 0.006 |
-| High-Performance (Hover) | 0.0000 | 0.0000 | 0.0000 | 0.052 |
-| High-Performance (Circle) | 0.0026 | 0.0515 | 0.7445 | 0.006 |
-| High-Performance (Spiral) | 0.0011 | 0.0336 | 0.8579 | 0.005 |
-
-**Key Observation:** The **Input MSE** for the High-Performance PID ($\sim 0.8$) is nearly **three orders of magnitude higher** than the MPC ($\sim 0.001$). This indicates that the PID operates near saturation limits to maintain tracking, which would likely induce mechanical vibration in a physical system.
-
-**3. Impact of Terminal Cost (DARE)**
-An adaptive terminal cost strategy was also evaluated. Results indicate a performance degradation for short horizons due to "Numerical Dominance," where the high terminal weights overshadow the stage costs, causing the controller to prioritize the final state over the path.
-
-| Scenario | State MSE | State RMSE [m] | Avg. Solve Time [ms] |
-| :--- | :--- | :--- | :--- |
-| Hover | $6.71 \times 10^{-20}$ | $2.59 \times 10^{-10}$ | 4.29 |
-| Circle | 0.1225 | 0.3500 | 5.41 |
-| Spiral | 0.1116 | 0.3341 | 5.55 |
 
 ### MPC Tracking Error
 
@@ -244,5 +188,6 @@ Matteo Tavano
 2.  R.M. Murray, "Optimization Based Control", California Institute of Technology, 2023, Chapter Trajectory Generation and Differential Flatness, http://www.cds.caltech.edu/~murray/books/AM08/pdf/obc-complete_12Mar2023.pdf
 
 3.  The MathWorks Inc., "MATLAB version: 24.2.0 (R2024b)", The MathWorks Inc., 2024, https://www.mathworks.com
+
 
 
