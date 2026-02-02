@@ -276,8 +276,9 @@ Matteo Tavano
    *Automatica*, vol. 34, no. 10, pp. 1205–1217, 1998.  
    https://doi.org/10.1016/S0005-1098(98)00067-1
 
-6 **NotesTeX**: An All-In-One LaTeX Notes Package For Students,
-  https://github.com/Adhumunt/NotesTeX
+6. **NotesTeX**: An All-In-One LaTeX Notes Package For Students,
+   https://github.com/Adhumunt/NotesTeX
+
 
 
 
