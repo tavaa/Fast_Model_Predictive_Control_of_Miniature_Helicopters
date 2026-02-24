@@ -7,7 +7,7 @@ classdef ControlParams
     
     properties (Constant)
         % Timing Configuration
-        Ts = 0.02;      % Sampling period [s] (50 Hz control frequency)
+        Ts = 0.20;      % Sampling period [s] (50 Hz control frequency)
         p  = 18;        % Prediction horizon [steps] (0.36s look-ahead)
         
         % State Weighting Matrix Q (Diagonal entries)
@@ -15,19 +15,19 @@ classdef ControlParams
         % Higher weights for position (x, y) ensure tight tracking.
 
         % paper configuration
-        %Q_diag = [50; 50; 50; 10; 3; 3; 1; 2; 15; 15];
+        Q_diag = [50; 50; 50; 10; 3; 3; 1; 2; 15; 15];
 
         % improved configuration
-        Q_diag = [500; 500; 50; 10; 3; 3; 1; 2; 15; 15];
+        %Q_diag = [500; 500; 50; 10; 3; 3; 1; 2; 15; 15];
         
         % Input Weighting Matrix R (Diagonal entries)
         % Vector: [ux, uy, uz, uPsi]
 
         % paper configuration
-        %R_diag = [2.0; 2.0; 2.0; 2.0];    
+        R_diag = [2.0; 2.0; 2.0; 2.0];    
 
         % improved configuration
-        R_diag = [0.1; 0.1; 0.1; 0.1];
+        %R_diag = [0.1; 0.1; 0.1; 0.1];
         
         % Terminal Cost Strategy
         % true: Solves Discrete Algebraic Riccati Equation (DARE) for Qf.
