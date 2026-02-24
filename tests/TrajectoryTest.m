@@ -1,7 +1,9 @@
 % TEST TRAJECTORY GENERATION & KINEMATIC VERIFICATION
 %
 % Validates the geometric and kinematic consistency of the Shape classes.
-% Specifically verifies the 3-revolution Spiral duration and the 
+% Generates two figures:
+% 1. Standard Trajectories (Hover, Circle, Spiral) in a 2x3 grid.
+% 2. Elliptical Spiral (Focus) in a 2x1 grid.
 
 clear; clc; close all;
 
@@ -16,38 +18,60 @@ try
     assert(isfield(tp.Spiral, 'yaw_mode'), 'Spiral struct missing yaw_mode field.');
     assert(strcmp(tp.Spiral.yaw_mode, 'tangent'), 'Spiral should be in tangent mode.');
     
+    % Safety check for Ellipse params
+    %if ~isprop(tp, 'Ellipse') && ~isfield(tp, 'Ellipse')
+        %tp.Ellipse = struct('Rx', 2.0, 'Ry', 0.5, 'omega', 0.5, 'vz', 0.1, 'z_start', 0, 'yaw_mode', 'tangent');
+        %tp.T_duration_ellipse = (2 * pi / 0.5) * 2;
+    %end
+
     fprintf('OK.\n');
-    fprintf('      Spiral Revolutions: 3.0\n');
     fprintf('      Spiral Duration:    %.2f s\n', tp.T_duration_spiral);
-    fprintf('      Spiral Yaw Mode:    %s\n', tp.Spiral.yaw_mode);
     
-    %% TEST 2: Class Instantiation & C2 Continuity
+    %% TEST 2: Class Instantiation
     fprintf('[2/3] Instantiating Shape Classes... ');
     
     traj_hover  = ShapeHover(tp.Hover);
     traj_circle = ShapeCircle(tp.Circle);
     traj_spiral = ShapeSpiral(tp.Spiral);
+    traj_ellipse = ShapeSpiralEllipse(tp.Ellipse);
+    traj_lemniscate = ShapeLemniscate(tp.Lemniscate);
     
     fprintf('OK.\n');
     
-    %% TEST 3: Path Simulation & Heading Alignment
-    fprintf('[3/3] Simulating Geometry & Validating Tangency...\n');
+    %% TEST 3: Plotting
+    fprintf('[3/3] Generating Visualizations...\n');
     
-    % Define visualization settings
-    colors = lines(3); 
-    fig = figure('Name', 'Trajectory Kinematic Debugger', 'Color', 'w', 'Position', [100, 100, 1400, 800]);
+    colors = lines(4); 
     
-    % TEST A: HOVER (Steady State Check)
-    run_and_plot(traj_hover, 0:0.1:tp.T_duration_hover, 'Hover (Regulation)', 1, colors(1,:));
+    %% FIGURE 1: STANDARD TRAJECTORIES (2x3 Grid)
+    fig1 = figure('Name', 'Standard Trajectories (Hover, Circle, Spiral)', ...
+                  'Color', 'w', 'Position', [50, 100, 1200, 800]);
     
-    % TEST B: CIRCLE (1 Revolution )
-    run_and_plot(traj_circle, 0:0.05:tp.T_duration_circle, 'Circle (1 Lap)', 2, colors(2,:));
+    % Grid Size: 2 Rows, 3 Columns
+    g_rows = 2; g_cols = 3;
     
-    % TEST C: SPIRAL (3 Revolutions )
-    run_and_plot(traj_spiral, 0:0.05:tp.T_duration_spiral, 'Spiral (3 Laps)', 3, colors(3,:));
+    % Col 1: Hover
+    run_and_plot(traj_hover, 0:0.1:tp.T_duration_hover, 'Hover', 1, colors(1,:), g_rows, g_cols);
     
-    fprintf('\n[SUCCESS] All geometric tests passed. \n');
-    fprintf('          Spiral correctly returned to (X=1, Y=0).\n');
+    % Col 2: Circle
+    run_and_plot(traj_circle, 0:0.05:tp.T_duration_circle, 'Circle', 2, colors(2,:), g_rows, g_cols);
+    
+    % Col 3: Spiral
+    run_and_plot(traj_spiral, 0:0.05:tp.T_duration_spiral, 'Spiral 3D', 3, colors(3,:), g_rows, g_cols);
+    
+    
+    %% FIGURE 2: ELLIPTICAL SPIRAL FOCUS (2x1 Grid)
+    fig2 = figure('Name', 'Other Trajectories: Ellipse and Lemniscate', ...
+              'Color', 'w', 'Position', [900, 50, 1000, 900]);
+    
+    % Grid Size: 2 Rows, 1 Column (Top for 3D, Bottom for Time)
+    g_rows = 2; g_cols = 2;
+    
+    run_and_plot(traj_ellipse, 0:0.05:tp.T_duration_ellipse, 'Spiral Ellipse', 1, colors(4,:), g_rows, g_cols);
+    run_and_plot(traj_lemniscate, 0:0.05:tp.T_duration_lemniscate, 'Lemniscate', 2, colors(4,:), g_rows, g_cols);
+    
+    
+    fprintf('\n[SUCCESS] All geometric tests passed. Figures generated.\n');
     
 catch ME
     fprintf('\n[FAILED]: %s\n', ME.message);
@@ -57,7 +81,10 @@ end
 
 %% HELPER FUNCTION: Kinematic Simulation and Plotting
 
-function run_and_plot(traj_obj, t_vec, name, plot_idx, col)
+function run_and_plot(traj_obj, t_vec, name, col_idx, col, grid_rows, grid_cols)
+    % col_idx: The column index for this specific plot
+    % grid_rows, grid_cols: Size of the subplot grid (e.g., 2x3 or 2x1)
+    
     N = length(t_vec);
     
     % Preallocate Geometric Buffers
@@ -71,8 +98,10 @@ function run_and_plot(traj_obj, t_vec, name, plot_idx, col)
         Yaw(k)    = z(4);
     end
     
-    % 3D Geometric Plot 
-    subplot(2, 3, plot_idx);
+    %% ROW 1: 3D Geometric Plot 
+    % Subplot index calculation: (Row 1, Column col_idx)
+    subplot(grid_rows, grid_cols, col_idx);
+    
     plot3(Pos(1,:), Pos(2,:), Pos(3,:), 'Color', col, 'LineWidth', 2, 'DisplayName', 'Path');
     grid on; axis equal; hold on;
     
@@ -80,7 +109,7 @@ function run_and_plot(traj_obj, t_vec, name, plot_idx, col)
     plot3(Pos(1,1), Pos(2,1), Pos(3,1), 'o', 'MarkerSize', 8, 'MarkerFaceColor', 'g', 'DisplayName', 'Start');
     plot3(Pos(1,end), Pos(2,end), Pos(3,end), 's', 'MarkerSize', 8, 'MarkerFaceColor', 'r', 'DisplayName', 'End');
     
-    % Heading Vector Visualization 
+    % Heading Vector Visualization (Quivers)
     num_quivers = 15;
     step = max(floor(N/num_quivers), 1);
     idx_q = 1:step:N;
@@ -90,36 +119,47 @@ function run_and_plot(traj_obj, t_vec, name, plot_idx, col)
     v_h = v_len * sin(Yaw(idx_q));
     
     quiver3(Pos(1,idx_q), Pos(2,idx_q), Pos(3,idx_q), ...
-            u_h, v_h, zeros(size(u_h)), 0, 'k', 'LineWidth', 1.2);
+            u_h, v_h, zeros(size(u_h)), 0, 'k', 'LineWidth', 1.2, 'AutoScale', 'off');
             
     xlabel('X [m]'); ylabel('Y [m]'); zlabel('Z [m]');
-    title(['\bf ' name ' Trajectory']);
+    title(['\bf ' name ' (3D)']);
     
+    % View adjustments
     max_z = max(Pos(3,:));
     if max_z < 0.1, max_z = 1; end 
     zlim([0, max_z * 1.5]); 
-    
     view(45, 30);
     
-    % Time Series Plot 
-    subplot(2, 3, plot_idx + 3);
+    %% ROW 2: Time Series Plot 
+    % Subplot index calculation: (Row 2, Column col_idx) -> Index = col_idx + grid_cols
+    subplot(grid_rows, grid_cols, col_idx + grid_cols);
+    
     yyaxis left
-    plot(t_vec, Pos(1,:), '-', 'LineWidth', 1, 'DisplayName', 'x'); hold on;
-    plot(t_vec, Pos(2,:), '-', 'LineWidth', 1, 'DisplayName', 'y');
-    plot(t_vec, Pos(3,:), '-', 'LineWidth', 1.5, 'DisplayName', 'z');
+    % X: Red Continuous
+    plot(t_vec, Pos(1,:), 'r-', 'LineWidth', 1.5, 'DisplayName', 'x'); hold on;
+    % Y: Green Continuous
+    plot(t_vec, Pos(2,:), 'g-', 'LineWidth', 1.5, 'DisplayName', 'y');
+    % Z: Blue Dashed
+    plot(t_vec, Pos(3,:), 'b--', 'LineWidth', 1.5, 'DisplayName', 'z');
+    
     ylabel('Position [m]');
     
     % Ensure the 2D plot also has room to show Z clearly
     y_limit_upper = max(1.5, max(Pos(3,:)) + 0.5);
     ylim([-1.5, y_limit_upper]); 
+
+    ylim([-3, 3]); 
     
     yyaxis right
+    % Yaw: Black Continuous
     plot(t_vec, rad2deg(Yaw), 'k-', 'LineWidth', 1.5, 'DisplayName', 'Yaw');
-    ylabel('Heading [deg]');
+    ylabel('Yaw [deg]');
     
     xlabel('Time [s]');
-    xlim([t_vec(1), t_vec(end)]); % Force x-axis to match simulation duration exactly
-    title(['Temporal Evolution: ' name]);
+    xlim([t_vec(1), t_vec(end)]); 
+    title([name ' Evolution']);
     grid on;
-    legend('Location', 'best', 'FontSize', 8);
+    
+    % Legend always visible
+    legend('Location', 'best', 'FontSize', 8, 'NumColumns', 2);
 end
