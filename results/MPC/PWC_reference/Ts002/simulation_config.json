@@ -1,0 +1,90 @@
+{
+  "ModelParams": {
+    "bx": 2,
+    "by": 2.1,
+    "bz": 18,
+    "kx": -0.5,
+    "ky": -0.4,
+    "u_min": [
+      -1,
+      -1,
+      -0.4,
+      -1
+    ],
+    "u_max": [
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "ControlParams": {
+    "Ts": 0.02,
+    "Horizon_p": 18,
+    "Q_diag": [
+      50,
+      50,
+      50,
+      10,
+      3,
+      3,
+      1,
+      2,
+      15,
+      15
+    ],
+    "R_diag": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "Stability_Enhanced_Qf": false
+  },
+  "TrajectoryParams": {
+    "Hover": {
+      "pos": [
+        0,
+        0,
+        1
+      ],
+      "psi": 0
+    },
+    "Circle": {
+      "R": 1,
+      "omega": 1,
+      "z_height": 1,
+      "center": [
+        0,
+        0
+      ],
+      "yaw_mode": "tangent"
+    },
+    "Lemniscate": {
+      "R": 1,
+      "omega": 0.7,
+      "z_height": 1,
+      "center": [
+        0,
+        0
+      ]
+    },
+    "Spiral": {
+      "R": 1,
+      "omega": 1,
+      "vz": 0.2,
+      "z_start": 0.5,
+      "Omega_yaw": 1.5,
+      "yaw_mode": "tangent"
+    },
+    "SpiralEllipse": {
+      "Rx": 3,
+      "Ry": 2,
+      "omega": 0.7,
+      "vz": 0.2,
+      "z_start": 0.5,
+      "Omega_yaw": 0,
+      "yaw_mode": "fixed"
+    }
+  }
+}
