@@ -27,10 +27,15 @@
 %      architecture for performance comparison.
 %
 %   3. MPC Simulation Loop for Ts:
-%        Runs in depth Simulation Loop for MPC, analyzing Ts 
-%         and different initial conditions.
+%      Runs in depth Simulation Loop for MPC, analyzing Ts 
+%      and different initial conditions.
 %
-%   4. Unit Test Suite:
+%   4. MPC Simulation Loop with PWC reference:
+%      Runs Simulation using PWC reference trajectory, generated feeding
+%      the PWC input to the non-linear model. Reference trajectory and
+%      closed-loop evolution are held constant between [k*Ts, (k+1)*Ts]
+%
+%   5. Unit Test Suite:
 %      Access to a submenu for validating specific mathematical subsystems
 %      (e.g., Physics, Linearization, Discretization, Optimization construction).
 %
@@ -81,7 +86,10 @@ while true
     fprintf('   [3] Run MPC Simulation Loop for Ts\n');
     fprintf('       (Tests in depth MPC Analysis based on Ts and Initialization strategies.)\n\n');
 
-    fprintf('   [4] Enter Unit Test Suite\n');
+    fprintf('   [4] Run MPC Simulation Loop with PWC reference\n');
+    fprintf('       (Tests MPC using PWC reference trajectory.)\n\n');
+
+    fprintf('   [5] Enter Unit Test Suite\n');
     fprintf('       (Validate individual components: Model, QP, Math, etc.)\n\n');
 
     fprintf('   [0] Exit\n');
@@ -89,7 +97,7 @@ while true
 
     %% MAIN MENU INPUT
     try
-        choice = input('Enter your choice [0-3]: ');
+        choice = input('Enter your choice [0-5]: ');
     catch
         choice = -1;
     end
@@ -131,6 +139,17 @@ while true
             end
 
         case 4
+            % MPC Simulation PWC Reference
+            if exist('MPCSimulationLoopPWC_reference.m', 'file')
+                fprintf('Starting MPC Simulation with PWC reference trajectory...\n');
+                run('MPCSimulationLoopPWC_reference.m');
+                waitForUser('Simulation Complete.');
+            else
+                fprintf('[ERROR] scripts/MPCSimulationLoopPWC_reference.m not found.\n');
+                waitForUser('Error.');
+            end
+
+        case 5
             % UNIT TEST SUITE SUB-LOOP 
             runTestSuite();
 
@@ -163,11 +182,13 @@ function runTestSuite()
         fprintf('   [7] MPC Controller Test\n');
         fprintf('   [8] Terminal Cost (DLQR) Test\n');
         fprintf('   [9] PID Controller Test\n');
+        fprintf('   [10] MPC Convergence Test\n');
+        fprintf('   [11] Open Loop Test (PWC inputs vs Continuous inputs)\n');
         fprintf('\n   [0] Return to Main Pipeline\n');
         fprintf('--------------------------------------------------------\n');
 
         try
-            t_choice = input('Select Test [0-9]: ');
+            t_choice = input('Select Test [0-11]: ');
         catch
             t_choice = -1;
         end
@@ -188,6 +209,8 @@ function runTestSuite()
             case 7, run('MPCControllerTest.m');
             case 8, run('TerminalCostTest.m');
             case 9, run('PIDControllerTest.m');
+            case 10, run('ConvergenceMPCTest.m');
+            case 11, run('OpenLoopTest.m');
             otherwise
                 fprintf('Invalid selection.\n');
         end
