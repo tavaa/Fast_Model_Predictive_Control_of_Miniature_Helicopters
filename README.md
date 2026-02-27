@@ -39,6 +39,7 @@ This project contains the material for the final exam project of the Modeling an
     - [MPC Results](#MPC-Results)
     - [PID Results](#PID-Results)
     - [Overall Comparison](#Overall-Comparison)
+- [Update PWC Reference](#Update-PWC-Reference)
 - [Author](#author)
 - [References](#references)
 
@@ -60,6 +61,7 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 ├── models/                                     # Helicopter Model
 │   ├── Discretization.m                        # Continuous to Discrete time conversion
 │   ├── FlatnessMap.m                           # Differential Flatness (State <-> Flat Output)
+│   ├── GeneratePWC_reference.m                 # Generate offline PWC reference trajectories 
 │   └── HelicopterModel.m                       # Nonlinear model
 │
 ├── plots/                                      # Visualization Outputs
@@ -71,6 +73,7 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 │   │   ├── High-Performance/                   # High-Performance setup
 │   │   ├── Paper-Fidelity/                     # Replication of reference paper results
 │   │   ├── Terminal-Cost/                      # Terminal-Cost setup results
+│   │   ├── PWC_reference/                      # Results using PWC reference trajectory
 │   │   └── Ts-Analysis/                        # Ts and initial conditions results
 │   │
 │   └── PID/
@@ -80,11 +83,13 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 ├── scripts/                                    # Simulation Loops
 │   ├── MPCSimulationLoop.m                     # Main loop for LTV-MPC simulation
 │   ├── MPCSimulationLoopv2.m                   # Main loop for LTV-MPC simulation with Ts Analysis
+│   ├── MPCSimulationLoopPWC_reference.m        # Main loop for LTV-MPC simulation using PWC reference
 │   └── PIDSimulationLoop.m                     # Main loop for PID benchmark simulation
 │
 ├── src/                                        # Core Controller Source Code
 │   ├── MPCController.m                         # LTV-MPC Logic and Optimization call
 │   ├── MPCControllerv2.m                       # LTV-MPC modified for Ts analysis
+│   ├── MPCController_PWC_reference.m           # LTV-MPC modified (update)
 │   ├── PIDController.m                         # PID implementation
 │   ├── QPBuilder.m                             # Sparse Matrix Construction for QP
 │   └── TerminalCost.m                          # DLQR-based Terminal Cost calculation
@@ -98,19 +103,23 @@ Fast_Model_Predictive_Control_of_Miniature_Helicopters/
 │   ├── PIDControllerTest.m
 │   ├── QPBuilderTest.m
 │   ├── TerminalCostTest.m
+│   ├── ConvergenceMPCTest.m
+│   ├── OpenLoopTest.m
 │   └── TrajectoryTest.m
 │
 ├── trajectory/                                 # Reference Path Generators
 │   ├── ShapeCircle.m
 │   ├── ShapeHover.m
 │   ├── ShapeSpiral.m
+│   ├── ShapeLemniscate.m
+│   ├── ShapeSpiralEllipse.m
 │   └── TrajectoryBase.m                        # Abstract base class for trajectories
 │
-├── Fast_Model_Predictive_Control_of_miniature_helicopters.pdf         # Main Project Documentation/Paper
+├── Report_Fast_Model_Predictive_Control_of_Miniature_Helicopters.pdf                  # Project Report
+├── Extension_Report_Fast_Model_Predictive_Control_of_Miniature_Helicopters.pdf         # Extension update
 ├── LICENSE.txt                                 # License definition
 ├── main.m                                      # CLI Project Orchestrator (Entry Point)
-├── README.md                                   # Project Overview
-└── Report_Fast_Model_Predictive_Control_of_Miniature_Helicopters.pdf # Project Report
+└── README.md                                   # Project Overview
 ```
 
 ## Tasks and goal setting
@@ -163,7 +172,11 @@ To successfully run the simulation and analysis pipelines, ensure your environme
         Executes the MPC in depth analysis for Ts and different initial conditions.  
         📂 *Logs are automatically saved to* `/results/MPC/Ts-Analysis`.
 
-    *   **`[4]` Unit Test Suite**  
+    *   **`[4]` MPC Simulation PWC Reference**  
+        Executes the MPC using PWC referfence trajectory.  
+        📂 *Logs are automatically saved to* `/results/MPC/PWC_reference`.
+
+    *   **`[5]` Unit Test Suite**  
         Launches the testing framework to validate specific subsystems (e.g., Physics Engine, QP Builder, Terminal Cost) before running full simulations.
 
 4. **Inspect results and plots**
@@ -172,7 +185,7 @@ To successfully run the simulation and analysis pipelines, ensure your environme
 
 5. **Read the Report**
 
-   For a complete explanation, read the pdf report `Report_Fast_Model_Predictive_Control_of_Miniature_Helicopters.pdf`. 
+   For a complete explanation, read the pdf report `Report_Fast_Model_Predictive_Control_of_Miniature_Helicopters.pdf` and its extension. 
 
     
 ## Key Implementation Details
@@ -181,6 +194,14 @@ This project implements a **Linear Time-Varying Model Predictive Control (LTV-MP
 
 The optimal control problem is formulated as a **Sparse Quadratic Program (QP)**, preserving the banded structure of the dynamics constraints for efficient computation. To ensure real-time feasibility, a **Warm-Start strategy** propagates the previous optimal solution forward, significantly reducing solver convergence time. Closed-loop stability is enhanced via a **Terminal Cost ($Q_f$)**, computed by solving the Discrete Algebraic Riccati Equation (DARE) at the horizon's end. For performance comparison, a classical decoupled **PID controller** with gravity feedforward and integral anti-windup is included as a benchmark. The overall architecture prioritizes modularity and computational efficiency, bridging the gap between high-fidelity simulation and real-time constraints.
 
+## Update PWC Reference
+
+This extension transitions the reference trajectory handling from continuous sampling to a dynamically feasible **Piece-Wise Constant (PWC)** formulation. It also introduces new complex flight shapes, specifically the Lemniscate and Spiral Ellipse, analytically derived using differential flatness. To support this, the MPC controller has been modified to directly track these pre-generated PWC references while preserving the original LTV-MPC structure. Finally, the controller's robustness, accuracy, and convergence are systematically evaluated across multiple sampling times and challenging initial conditions.
+
+<p align="center">
+  <img src="plots/matlab/PWC_reference/Tracking_Lemniscate_Perturbation.gif" width="45%" />
+  <img src="plots/matlab/PWC_reference/Tracking_SpiralEllipse_Origin.gif" width="45%" />
+</p>
 
 ## Results
 
@@ -278,12 +299,6 @@ Matteo Tavano
 
 6. **NotesTeX**: An All-In-One LaTeX Notes Package For Students,
    https://github.com/Adhumunt/NotesTeX
-
-
-
-
-
-
 
 
 
