@@ -87,7 +87,9 @@ end
 fprintf('[SYSTEM] Global system configuration exported to JSON.\n');
 
 %% SIMULATION PIPELINE
+
 initial_conditions = {'OnReference', 'Perturbation', 'Origin'};
+%initial_conditions = {'OnReference'};
 
 % Initial Conditions
 for c = 1:length(initial_conditions)
@@ -263,7 +265,7 @@ function generateSimulationGIF(res_data, x_ref_pwc, gif_filename, scenario_name,
     end
 
     % Graphic Object Handles
-    plot3(X_ref, Y_ref, Z_ref, 'k--', 'LineWidth', 2);
+    plot3(X_ref, Y_ref, Z_ref, 'k', 'LineWidth', 1.5);
     h_traj = plot3(NaN, NaN, NaN, 'Color', [0 0.4 1], 'LineWidth', 2.5);
     h_heli = plot3(NaN, NaN, NaN, 'o', 'MarkerSize', 10, 'MarkerFaceColor', 'r', 'MarkerEdgeColor', 'k');
     h_target = plot3(NaN, NaN, NaN, 'x', 'MarkerSize', 14, 'LineWidth', 2.5, 'Color', 'k');
