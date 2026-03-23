@@ -120,10 +120,18 @@ classdef MPCController_PWC_reference < handle
                 [Ad, Bd] = Discretization.discretize(Ac, Bc, Ts, 'euler'); 
                 
                 % Affine correction term: d_k = f(x,u) - (Ad*x + Bd*u)
-                dxdt = obj.model.dynamics(0, x_lin, u_lin); 
-                x_next_nl = x_lin + dxdt * Ts;
-                d_val = x_next_nl - (Ad * x_lin + Bd * u_lin);
+
+                % v1: CORRECTION HERE !!!!
+                %dxdt = obj.model.dynamics(0, x_lin, u_lin); 
+                %x_next_nl = x_lin + dxdt * Ts;
+                %d_val = x_next_nl - (Ad * x_lin + Bd * u_lin);
                 
+                % v2: major precision inside MPC controller
+                [~, x_sim_temp] = ode45(@(t,x) obj.model.dynamics(t, x, u_lin), [0 Ts], x_lin);
+                x_next_nl = x_sim_temp(end, :)';
+
+                d_val = x_next_nl - (Ad * x_lin + Bd * u_lin);
+
                 Ad_seq{k} = Ad;
                 Bd_seq{k} = Bd;
                 d_seq{k}  = d_val;
